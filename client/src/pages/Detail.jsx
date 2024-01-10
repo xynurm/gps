@@ -8,8 +8,9 @@ import Chart from 'react-apexcharts';
 export default function Detail() {
   let { id } = useParams();
 
-  let { data: gps } = useQuery('gpsDetailCache', async () => {
+  let { data: gps, status } = useQuery('gpsDetailCache', async () => {
     const response = await API.get('/gps/' + id);
+
     return response.data.data;
   });
 
@@ -93,6 +94,15 @@ export default function Detail() {
     }
   }, [gps]);
 
+  if (!gps) {
+    return (
+      <Container>
+        <Row className="mt-5">
+          <h4>Data tidak ditemukan</h4>
+        </Row>
+      </Container>
+    );
+  }
   return (
     <Container>
       <Row className="mt-5 mb-4">
@@ -121,11 +131,7 @@ export default function Detail() {
         </Col>
         <Col>
           <div className="card">
-            <div className="card-body">
-              <div className="row d-flex justify-content-center">
-                <Col>{chartRef.current}</Col>
-              </div>
-            </div>
+            <div className="card-body">{chartRef.current}</div>
           </div>
         </Col>
       </Row>
