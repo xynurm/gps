@@ -3,7 +3,8 @@ import { Container, Table, Row, Col } from 'react-bootstrap';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { API } from '../config/api';
-import Chart from 'chart.js/auto';
+import Chart from 'react-apexcharts';
+
 export default function Detail() {
   let { id } = useParams();
 
@@ -14,16 +15,9 @@ export default function Detail() {
 
   const deviceType = gps && gps.length > 0 ? gps[0].device_type : null;
 
-  const formatTimestamp = (timestamp) => {
+  const formatDate = (timestamp) => {
     const date = new Date(timestamp);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-based
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
 
   const chartRef = useRef();
@@ -31,7 +25,6 @@ export default function Detail() {
   const [locations, setLocations] = useState([]);
   const [data, setData] = useState([]);
 
-  // Add useEffect to draw or update the pie chart
   useEffect(() => {
     if (gps) {
       // Extract labels and data from the gps array
@@ -49,28 +42,60 @@ export default function Detail() {
       setLocations(gpsLocations);
       setData(gpsData);
 
-      if (chartRef.current) {
-        chartRef.current.destroy();
-      }
-
-      // Configure the pie chart
-      const ctx = document.getElementById('pieChart').getContext('2d');
-      chartRef.current = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: gpsLocations,
-          datasets: [
-            {
-              data: gpsData
-            }
-          ]
+      // Configure the pie chart using ApexCharts
+      const options = {
+        labels: gpsLocations,
+        dataLabels: {
+          enabled: false
+        },
+        tooltip: {
+          enabled: false
+        },
+        title: {
+          text: '% Time spent on each location',
+          align: 'center',
+          margin: 10,
+          offsetX: 0,
+          offsetY: 0,
+          floating: false,
+          style: {
+            fontSize: '16px',
+            fontWeight: 'bold',
+            fontFamily: 'Helvetica, Arial',
+            color: '#263238'
+          }
+        },
+        legend: {
+          show: true,
+          position: 'right',
+          fontSize: '16px',
+          fontFamily: 'Helvetica, Arial',
+          fontWeight: 'bold',
+          floating: false,
+          formatter: function (seriesName, opts) {
+            return `
+            
+            <Col className="align-self-center" md="3">  
+            <span> ${seriesName} :</span> <br>
+            <span> ${gpsData[opts.seriesIndex]} %</span>
+            </Col>
+            `;
+          }
         }
-      });
+      };
+
+      const series = gpsData;
+
+      // Render the ApexChart
+      chartRef.current = (
+        <Chart options={options} series={series} type="pie" width="400" />
+      );
     }
   }, [gps]);
+
   return (
     <Container>
-      <Row className='mt-5'>
+      <Row className="mt-5 mb-4">
         <h4>{id}</h4>
         <h4>{deviceType}</h4>
       </Row>
@@ -87,7 +112,7 @@ export default function Detail() {
             <tbody>
               {gps?.map((item, index) => (
                 <tr key={index}>
-                  <td>{formatTimestamp(item.timestamp)}</td>
+                  <td>{formatDate(item.timestamp)}</td>
                   <td>{item.location}</td>
                 </tr>
               ))}
@@ -98,17 +123,7 @@ export default function Detail() {
           <div className="card">
             <div className="card-body">
               <div className="row d-flex justify-content-center">
-                <Col md="6">
-                  <canvas id="pieChart" width="100" height="100"></canvas>
-                </Col>
-                <Col className="align-self-center" md="3">
-                  Time Spent
-                  {locations.map((location, index) => (
-                    <li key={index}>
-                      {location}: <br /> {data[index]}%
-                    </li>
-                  ))}
-                </Col>
+                <Col>{chartRef.current}</Col>
               </div>
             </div>
           </div>
