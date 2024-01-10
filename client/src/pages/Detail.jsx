@@ -58,6 +58,7 @@ export default function Detail() {
       chartRef.current = new Chart(ctx, {
         type: 'pie',
         data: {
+          labels: gpsLocations,
           datasets: [
             {
               data: gpsData
@@ -97,10 +98,10 @@ export default function Detail() {
           <div className="card">
             <div className="card-body">
               <div className="row d-flex justify-content-center">
-                <Col mdk="3">
-                  <canvas id="pieChart" width="300" height="300"></canvas>
+                <Col md="6">
+                  <canvas id="pieChart" width="100" height="100"></canvas>
                 </Col>
-                <Col className="align-self-center" md="4">
+                <Col className="align-self-center" md="3">
                   Time Spent
                   {locations.map((location, index) => (
                     <li key={index}>
