@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Container, Table } from 'react-bootstrap';
+import React, { useEffect, useRef, useState } from 'react';
+import { Container, Table, Row, Col } from 'react-bootstrap';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { API } from '../config/api';
@@ -28,20 +28,26 @@ export default function Detail() {
 
   const chartRef = useRef();
 
+  const [locations, setLocations] = useState([]);
+  const [data, setData] = useState([]);
+
   // Add useEffect to draw or update the pie chart
   useEffect(() => {
     if (gps) {
       // Extract labels and data from the gps array
-      const locations = [...new Set(gps.map((item) => item.location))];
+      const gpsLocations = [...new Set(gps.map((item) => item.location))];
       const totalCount = gps.length;
 
       // Calculate the percentage for each location
-      const data = locations.map((location) => {
+      const gpsData = gpsLocations.map((location) => {
         const locationCount = gps.filter(
           (item) => item.location === location
         ).length;
-        return ((locationCount / totalCount) * 100).toFixed(2);
+        return (locationCount / totalCount) * 100;
       });
+
+      setLocations(gpsLocations);
+      setData(gpsData);
 
       if (chartRef.current) {
         chartRef.current.destroy();
@@ -52,50 +58,61 @@ export default function Detail() {
       chartRef.current = new Chart(ctx, {
         type: 'pie',
         data: {
-          labels: locations,
           datasets: [
             {
-              data: data,
-              backgroundColor: [
-                'red',
-                'blue',
-                'green' // Add more colors as needed
-              ]
+              data: gpsData
             }
           ]
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: '% Time spent on each location'
-            }
-          },
         }
       });
     }
   }, [gps]);
   return (
     <Container>
-      <p>{id}</p>
-      <p>{deviceType}</p>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          {gps?.map((item, index) => (
-            <tr key={index}>
-              <td>{formatTimestamp(item.timestamp)}</td>
-              <td>{item.location}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-      <canvas id="pieChart" width="400" height="400"></canvas>
+      <Row>
+        <p>{id}</p>
+        <p>{deviceType}</p>
+      </Row>
+
+      <Row>
+        <Col md="4">
+          <Table bordered>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gps?.map((item, index) => (
+                <tr key={index}>
+                  <td>{formatTimestamp(item.timestamp)}</td>
+                  <td>{item.location}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Col>
+        <Col>
+          <div className="card">
+            <div className="card-body">
+              <div className="row d-flex justify-content-center">
+                <Col mdk="3">
+                  <canvas id="pieChart" width="300" height="300"></canvas>
+                </Col>
+                <Col className="align-self-center" md="4">
+                  Time Spent
+                  {locations.map((location, index) => (
+                    <li key={index}>
+                      {location}: <br /> {data[index]}%
+                    </li>
+                  ))}
+                </Col>
+              </div>
+            </div>
+          </div>
+        </Col>
+      </Row>
     </Container>
   );
 }
