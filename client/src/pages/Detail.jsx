@@ -70,9 +70,9 @@ export default function Detail() {
   }, [gps]);
   return (
     <Container>
-      <Row>
-        <p>{id}</p>
-        <p>{deviceType}</p>
+      <Row className='mt-5'>
+        <h4>{id}</h4>
+        <h4>{deviceType}</h4>
       </Row>
 
       <Row>
